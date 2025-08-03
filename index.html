@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Engineering Time Planner</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background-color: #f2f6fb;
+    }
+    header {
+      background-color: #2d5be3;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: 20px;
+    }
+    .section {
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin: 10px;
+      padding: 20px;
+      flex: 1 1 350px;
+      max-width: 800px;
+    }
+    h2 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+    input, select, textarea, button {
+      width: 100%;
+      padding: 8px;
+      margin: 6px 0 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    ul {
+      list-style: none;
+      padding-left: 0;
+    }
+    li {
+      padding: 6px 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      text-align: center;
+      padding: 8px;
+      min-height: 40px;
+    }
+    td[contenteditable] {
+      background-color: #fafafa;
+    }
+    .color-legend {
+      font-size: 0.85em;
+      margin-top: 10px;
+    }
+    .legend-item {
+      display: inline-block;
+      margin-right: 10px;
+    }
+    .legend-box {
+      width: 12px;
+      height: 12px;
+      display: inline-block;
+      margin-right: 4px;
+      vertical-align: middle;
+      border: 1px solid #ccc;
+    }
+    .exam { background-color: #ffdddd; }
+    .fun { background-color: #ddffdd; }
+    .study { background-color: #ddeeff; }
+    .task-progress { margin-top: 5px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🎓 Engineering Student Time Planner</h1>
+  <p>Track your modules, progress, and weekly events</p>
+</header>
+
+<div class="container">
+
+  <!-- Module Manager -->
+  <div class="section">
+    <h2>📚 Add Module / Assignment</h2>
+    <input type="text" id="moduleName" placeholder="Module Name"/>
+    <input type="text" id="assignmentTitle" placeholder="Assignment Title"/>
+    <input type="date" id="dueDate"/>
+    <button onclick="addTask()">Add Assignment</button>
+  </div>
+
+  <!-- Assignment List -->
+  <div class="section">
+    <h2>📌 Assignments & Progress</h2>
+    <ul id="taskList"></ul>
+  </div>
+
+  <!-- Weekly Schedule -->
+  <div class="section">
+    <h2>📅 Weekly Schedule Planner</h2>
+    <table id="scheduleTable">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Morning</td><td contenteditable></td><td contenteditable></td><td contenteditable></td><td contenteditable></td><td contenteditable></td><td contenteditable></td><td contenteditable></td></tr>
+        <tr><td>Afternoon</td><td contenteditable></td><td contenteditable></td><td contenteditable></td><td contenteditable></td><td contenteditable></td><td contenteditable></td><td contenteditable></td></tr>
+        <tr><td>Evening</td><td contenteditable></td><td contenteditable></td><td contenteditable></td><td contenteditable></td><td contenteditable></td><td contenteditable></td><td contenteditable></td></tr>
+      </tbody>
+    </table>
+
+    <div class="color-legend">
+      <p><strong>🎨 Color Code (Optional):</strong></p>
+      <span class="legend-item"><span class="legend-box exam"></span> Exam</span>
+      <span class="legend-item"><span class="legend-box fun"></span> Fun / Outing</span>
+      <span class="legend-item"><span class="legend-box study"></span> Study</span>
+    </div>
+    <p style="font-size: 0.85em; color: gray;">Tip: Right-click a cell to choose a background color. Your schedule auto-saves!</p>
+  </div>
+
+</div>
+
+<script>
+  // Task & Progress
+  function addTask() {
+    const module = document.getElementById("moduleName").value;
+    const title = document.getElementById("assignmentTitle").value;
+    const date = document.getElementById("dueDate").value;
+
+    if (module && title && date) {
+      const taskList = document.getElementById("taskList");
+
+      const li = document.createElement("li");
+      li.innerHTML = `
+        <strong>${module}</strong>: ${title} (Due: ${date})
+        <div class="task-progress">
+          Progress:
+          <input type="range" min="0" max="100" value="0" step="10" oninput="this.nextElementSibling.textContent = this.value + '%'">
+          <span>0%</span>
+        </div>
+      `;
+      taskList.appendChild(li);
+
+      document.getElementById("moduleName").value = "";
+      document.getElementById("assignmentTitle").value = "";
+      document.getElementById("dueDate").value = "";
+    } else {
+      alert("Please fill in all fields!");
+    }
+  }
+
+  // Weekly Planner Save & Load
+  const table = document.getElementById("scheduleTable");
+
+  // Save schedule on edit
+  table.addEventListener("input", () => {
+    const data = [];
+    for (let row of table.rows) {
+      const rowData = [];
+      for (let cell of row.cells) {
+        rowData.push(cell.innerHTML);
+      }
+      data.push(rowData);
+    }
+    localStorage.setItem("weeklySchedule", JSON.stringify(data));
+  });
+
+  // Load saved schedule
+  window.addEventListener("load", () => {
+    const saved = localStorage.getItem("weeklySchedule");
+    if (saved) {
+      const data = JSON.parse(saved);
+      for (let i = 0; i < data.length; i++) {
+        for (let j = 0; j < data[i].length; j++) {
+          if (table.rows[i] && table.rows[i].cells[j]) {
+            table.rows[i].cells[j].innerHTML = data[i][j];
+          }
+        }
+      }
+    }
+  });
+
+  // Right-click to change background color of schedule cell
+  table.addEventListener("contextmenu", function (e) {
+    e.preventDefault();
+    const colors = ["#ffdddd", "#ddffdd", "#ddeeff", "#ffffff"];
+    if (e.target.tagName === "TD" && e.target.hasAttribute("contenteditable")) {
+      let current = e.target.style.backgroundColor;
+      let index = colors.indexOf(current);
+      e.target.style.backgroundColor = colors[(index + 1) % colors.length];
+    }
+  });
+</script>
+
+</body>
+</html>
