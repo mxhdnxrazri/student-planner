@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Engineering Time Planner</title>
+  <title>Engineering Student Planner</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -49,57 +49,44 @@
     li {
       padding: 6px 0;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
+    .task-progress {
+      margin-top: 5px;
     }
-    th, td {
+    .completed {
+      text-decoration: line-through;
+      color: gray;
+    }
+    .event-box {
       border: 1px solid #ccc;
-      text-align: center;
-      padding: 8px;
-      min-height: 40px;
+      padding: 6px;
+      margin: 5px 0;
+      border-radius: 6px;
+      background-color: #f9f9f9;
     }
-    td[contenteditable] {
-      background-color: #fafafa;
+    .event-category {
+      font-size: 0.9em;
+      font-weight: bold;
     }
-    .color-legend {
-      font-size: 0.85em;
-      margin-top: 10px;
-    }
-    .legend-item {
-      display: inline-block;
-      margin-right: 10px;
-    }
-    .legend-box {
-      width: 12px;
-      height: 12px;
-      display: inline-block;
-      margin-right: 4px;
-      vertical-align: middle;
-      border: 1px solid #ccc;
-    }
-    .exam { background-color: #ffdddd; }
-    .fun { background-color: #ddffdd; }
-    .study { background-color: #ddeeff; }
-    .task-progress { margin-top: 5px; }
   </style>
 </head>
 <body>
 
 <header>
-  <h1>🎓 Engineering Student Time Planner</h1>
-  <p>Track your modules, progress, and weekly events</p>
+  <h1>🎓 Engineering Student Planner</h1>
+  <p>Track your assignments, priorities, and weekly schedule</p>
 </header>
 
 <div class="container">
 
-  <!-- Module Manager -->
+  <!-- Assignment Manager -->
   <div class="section">
-    <h2>📚 Add Module / Assignment</h2>
-    <input type="text" id="moduleName" placeholder="Module Name"/>
-    <input type="text" id="assignmentTitle" placeholder="Assignment Title"/>
-    <input type="date" id="dueDate"/>
+    <h2>📚 Add Assignment</h2>
+    <input type="text" id="moduleName" placeholder="Module Name" />
+    <input type="text" id="assignmentTitle" placeholder="Assignment Title" />
+    <input type="date" id="dueDate" />
+    <input type="time" id="dueTime" />
+    <label for="priority">Priority (1 = Low, 5 = High):</label>
+    <input type="range" id="priority" min="1" max="5" value="3" />
     <button onclick="addTask()">Add Assignment</button>
   </div>
 
@@ -109,104 +96,143 @@
     <ul id="taskList"></ul>
   </div>
 
-  <!-- Weekly Schedule -->
+  <!-- Weekly Event Input -->
   <div class="section">
-    <h2>📅 Weekly Schedule Planner</h2>
-    <table id="scheduleTable">
-      <thead>
-        <tr>
-          <th>Time</th>
-          <th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr><td>Morning</td><td contenteditable></td><td contenteditable></td><td contenteditable></td><td contenteditable></td><td contenteditable></td><td contenteditable></td><td contenteditable></td></tr>
-        <tr><td>Afternoon</td><td contenteditable></td><td contenteditable></td><td contenteditable></td><td contenteditable></td><td contenteditable></td><td contenteditable></td><td contenteditable></td></tr>
-        <tr><td>Evening</td><td contenteditable></td><td contenteditable></td><td contenteditable></td><td contenteditable></td><td contenteditable></td><td contenteditable></td><td contenteditable></td></tr>
-      </tbody>
-    </table>
+    <h2>📅 Add Weekly Event</h2>
+    <select id="eventDay">
+      <option value="">Select Day</option>
+      <option>Monday</option><option>Tuesday</option><option>Wednesday</option>
+      <option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option>
+    </select>
+    <input type="time" id="eventStart" placeholder="Start Time" />
+    <input type="time" id="eventEnd" placeholder="End Time" />
+    <select id="eventCategory">
+      <option value="">Select Category</option>
+      <option value="Study">📘 Study</option>
+      <option value="Exam">📝 Exam</option>
+      <option value="Fun">🎉 Fun</option>
+      <option value="CCA">🎭 CCA</option>
+      <option value="Other">🛠️ Other</option>
+    </select>
+    <input type="text" id="eventDescription" placeholder="Event Description (e.g., CCA Meeting)" />
+    <button onclick="addEvent()">Add Event</button>
+  </div>
 
-    <div class="color-legend">
-      <p><strong>🎨 Color Code (Optional):</strong></p>
-      <span class="legend-item"><span class="legend-box exam"></span> Exam</span>
-      <span class="legend-item"><span class="legend-box fun"></span> Fun / Outing</span>
-      <span class="legend-item"><span class="legend-box study"></span> Study</span>
-    </div>
-    <p style="font-size: 0.85em; color: gray;">Tip: Right-click a cell to choose a background color. Your schedule auto-saves!</p>
+  <!-- Weekly Schedule Display with Filter -->
+  <div class="section">
+    <h2>📅 Weekly Schedule</h2>
+    <label for="filterSelect">Filter by Category:</label>
+    <select id="filterSelect" onchange="filterEvents()">
+      <option value="All">Show All</option>
+      <option value="Study">Study</option>
+      <option value="Exam">Exam</option>
+      <option value="Fun">Fun</option>
+      <option value="CCA">CCA</option>
+      <option value="Other">Other</option>
+    </select>
+    <div id="eventList"></div>
   </div>
 
 </div>
 
 <script>
-  // Task & Progress
+  // Add Assignment
   function addTask() {
     const module = document.getElementById("moduleName").value;
     const title = document.getElementById("assignmentTitle").value;
     const date = document.getElementById("dueDate").value;
+    const time = document.getElementById("dueTime").value;
+    const priority = document.getElementById("priority").value;
 
-    if (module && title && date) {
+    if (module && title && date && time) {
       const taskList = document.getElementById("taskList");
 
       const li = document.createElement("li");
-      li.innerHTML = `
-        <strong>${module}</strong>: ${title} (Due: ${date})
-        <div class="task-progress">
-          Progress:
-          <input type="range" min="0" max="100" value="0" step="10" oninput="this.nextElementSibling.textContent = this.value + '%'">
-          <span>0%</span>
-        </div>
+      const content = document.createElement("div");
+      content.innerHTML = `<strong>${module}</strong>: ${title} (Due: ${date} ${time})<br/>Priority: ${priority}`;
+      
+      const progressDiv = document.createElement("div");
+      progressDiv.className = "task-progress";
+      progressDiv.innerHTML = `
+        Progress:
+        <input type="range" min="0" max="100" value="0" step="10">
+        <span>0%</span>
       `;
+      
+      const progressBar = progressDiv.querySelector("input");
+      const progressLabel = progressDiv.querySelector("span");
+
+      progressBar.addEventListener("input", () => {
+        progressLabel.textContent = `${progressBar.value}%`;
+        if (progressBar.value == "100") {
+          content.classList.add("completed");
+        } else {
+          content.classList.remove("completed");
+        }
+      });
+
+      li.appendChild(content);
+      li.appendChild(progressDiv);
       taskList.appendChild(li);
 
+      // Reset form
       document.getElementById("moduleName").value = "";
       document.getElementById("assignmentTitle").value = "";
       document.getElementById("dueDate").value = "";
+      document.getElementById("dueTime").value = "";
+      document.getElementById("priority").value = 3;
     } else {
-      alert("Please fill in all fields!");
+      alert("Please fill in all assignment fields!");
     }
   }
 
-  // Weekly Planner Save & Load
-  const table = document.getElementById("scheduleTable");
+  // Add Weekly Event
+  function addEvent() {
+    const day = document.getElementById("eventDay").value;
+    const start = document.getElementById("eventStart").value;
+    const end = document.getElementById("eventEnd").value;
+    const category = document.getElementById("eventCategory").value;
+    const description = document.getElementById("eventDescription").value;
 
-  // Save schedule on edit
-  table.addEventListener("input", () => {
-    const data = [];
-    for (let row of table.rows) {
-      const rowData = [];
-      for (let cell of row.cells) {
-        rowData.push(cell.innerHTML);
+    if (day && start && end && category && description) {
+      const eventList = document.getElementById("eventList");
+
+      const box = document.createElement("div");
+      box.className = "event-box";
+      box.setAttribute("data-category", category); // For filtering
+
+      box.innerHTML = `
+        <div><strong>${day}</strong> | ${start} - ${end}</div>
+        <div class="event-category">${category}</div>
+        <div>${description}</div>
+      `;
+      eventList.appendChild(box);
+
+      // Reset form
+      document.getElementById("eventDay").value = "";
+      document.getElementById("eventStart").value = "";
+      document.getElementById("eventEnd").value = "";
+      document.getElementById("eventCategory").value = "";
+      document.getElementById("eventDescription").value = "";
+    } else {
+      alert("Please fill in all event fields!");
+    }
+  }
+
+  // Filter Events by Category
+  function filterEvents() {
+    const selectedCategory = document.getElementById("filterSelect").value;
+    const allEvents = document.querySelectorAll(".event-box");
+
+    allEvents.forEach(event => {
+      const category = event.getAttribute("data-category");
+      if (selectedCategory === "All" || category === selectedCategory) {
+        event.style.display = "block";
+      } else {
+        event.style.display = "none";
       }
-      data.push(rowData);
-    }
-    localStorage.setItem("weeklySchedule", JSON.stringify(data));
-  });
-
-  // Load saved schedule
-  window.addEventListener("load", () => {
-    const saved = localStorage.getItem("weeklySchedule");
-    if (saved) {
-      const data = JSON.parse(saved);
-      for (let i = 0; i < data.length; i++) {
-        for (let j = 0; j < data[i].length; j++) {
-          if (table.rows[i] && table.rows[i].cells[j]) {
-            table.rows[i].cells[j].innerHTML = data[i][j];
-          }
-        }
-      }
-    }
-  });
-
-  // Right-click to change background color of schedule cell
-  table.addEventListener("contextmenu", function (e) {
-    e.preventDefault();
-    const colors = ["#ffdddd", "#ddffdd", "#ddeeff", "#ffffff"];
-    if (e.target.tagName === "TD" && e.target.hasAttribute("contenteditable")) {
-      let current = e.target.style.backgroundColor;
-      let index = colors.indexOf(current);
-      e.target.style.backgroundColor = colors[(index + 1) % colors.length];
-    }
-  });
+    });
+  }
 </script>
 
 </body>
